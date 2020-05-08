@@ -8,9 +8,10 @@ from PIL import Image
 from replayMemory import *
 from epsilonGreedyStrategy import *
 from agent import *
-from cartPoleEnvManager import *
+from EnvManager import *
 from Qvalues import *
 from utils import *
+from DQN import *
 
 import torch
 import torch.nn as nn
@@ -43,7 +44,6 @@ For each episode:
         Observe reward and next state.
         Store experience in replay memory.
         Sample random batch from replay memory.
-        Preprocess states from batch.
         Pass batch of preprocessed states to policy network.
         Calculate loss between output Q-values and target Q-values.
             Requires a pass to the target network for the next state
@@ -69,7 +69,7 @@ num_episodes = 1000
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 envM = EnvManager(device)
 strategy = EpsilonGreedyStrategy(eps_start, eps_end, eps_decay)
-agent = Agent(strategy, em.num_actions_available(), device)
+agent = Agent(strategy, envM.num_actions_available(), device)
 #1) Initialize replay memory capacity.
 memory = ReplayMemory(memory_size)
 
@@ -89,29 +89,43 @@ for episode in range(num_episodes):
     img = envM.get_state()
     state = decreaseObservationSpace(img)
     state = addDirection(state,None)
+    print("Initial State",state)
     assert (state.shape[0]==113)
     
     for timestep in count():
         action = agent.select_action(state, policy_net)
+        print("Getting actions",action)
         reward = envM.take_action(action)
+        print("Getting reward", reward)
         next_img = envM.get_state()
+        
         next_state = decreaseObservationSpace(img)
+        
         next_state = addDirection(next_state,state)
+        print("State",next_state)
         memory.push(Experience(state, action, next_state, reward))
+        print("Pushing into memory")
         state = next_state
         if memory.can_provide_sample(batch_size):
+            print("Enough data in memory")
             experiences = memory.sample(batch_size)
+            print("Loading batch")
             states, actions, rewards, next_states = extract_tensors(experiences)
-            
+            print("Compute Q")
             current_q_values = QValues.get_current(policy_net, states, actions)
+            print("compute next Q")
             next_q_values = QValues.get_next(target_net, next_states)
+            print("Compute target Q")
             target_q_values = (next_q_values * gamma) + rewards
-                
+            print(current_q_values, next_q_values,target_q_values)
+            print("Computing loss")   
             loss = F.mse_loss(current_q_values, target_q_values.unsqueeze(1))
+            print(loss)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        if em.done:
+        if envM.done:
+            print("Done!")
             episode_durations.append(timestep)
             plot(episode_durations, 100)
             break

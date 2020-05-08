@@ -43,11 +43,41 @@ def decreaseObservationSpace(observationSpace_old):
     out= blocks.flatten().astype(int).tolist()
     out.append(slider)            
     out= out + ball.tolist()
-    return np.array(out) #111 int + speed
+    return np.array(out,dtype=int) #111 int + speed
 
-def addDirection(NewState,OldState):
-    if OldState == None:
-        dir = np.zeros(2)
+def addDirection(NewState,OldState=None):
+    l1 = list(NewState)
+    
+    if OldState is None:
+        dir = np.zeros(2,dtype=int)
     else:
         dir = NewState[-2:]-OldState[-2:]
-    return NewState.concatenate(dir)
+    l2 = list(dir)
+    l1=l1+l2
+    return np.array(l1)
+
+def extract_tensors(experiences):
+    # Convert batch of Experiences to Experience of batches
+    batch = Experience(*zip(*experiences))
+
+    t1 = torch.cat(batch.state)
+    t2 = torch.cat(batch.action)
+    t3 = torch.cat(batch.reward)
+    t4 = torch.cat(batch.next_state)
+
+    return (t1,t2,t3,t4)
+
+def plot(values, moving_avg_period):
+    plt.figure(2)
+    plt.clf()        
+    plt.title('Training...')
+    plt.xlabel('Episode')
+    plt.ylabel('Duration')
+    plt.plot(values)
+
+    moving_avg = get_moving_average(moving_avg_period, values)
+    plt.plot(moving_avg)    
+    plt.pause(0.001)
+    print("Episode", len(values), "\n", \
+        moving_avg_period, "episode moving avg:", moving_avg[-1])
+    if is_ipython: display.clear_output(wait=True)

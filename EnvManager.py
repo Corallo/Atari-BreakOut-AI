@@ -16,7 +16,7 @@ class EnvManager():
     def close(self):
         self.env.close()
     
-    def render(self, mode='human'):
+    def render(self, mode):
         return self.env.render(mode)
     
     def num_actions_available(self):
@@ -30,12 +30,4 @@ class EnvManager():
         return self.current_screen is None
     
     def get_state(self):
-        if self.just_starting() or self.done:
-            self.current_screen = self.get_processed_screen()
-            black_screen = torch.zeros_like(self.current_screen)
-            return black_screen
-        else:
-            s1 = self.current_screen
-            s2 = self.get_processed_screen()
-            self.current_screen = s2
-            return s2 - s1
+        return self.env.render("rgb_array")
