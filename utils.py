@@ -1,4 +1,7 @@
 import numpy as np
+import matplotlib.pyplot as plt
+import torch
+from collections import namedtuple
 
 def decreaseObservationSpace(observationSpace_old):
     blocks = np.zeros(shape=(6, 18))
@@ -55,16 +58,22 @@ def addDirection(NewState,OldState=None):
     l2 = list(dir)
     l1=l1+l2
     return np.array(l1)
+    
+Experience = namedtuple('Experience', ('state', 'action', 'next_state', 'reward'))
 
 def extract_tensors(experiences):
     # Convert batch of Experiences to Experience of batches
     batch = Experience(*zip(*experiences))
+    
+    # convert into tuple of tensors instead of tuple of ndarrays
+    bs = [torch.from_numpy(a) for a in batch.state]
+    bns = [torch.from_numpy(a) for a in batch.next_state]
 
-    t1 = torch.cat(batch.state)
+    t1 = torch.cat(bs)
     t2 = torch.cat(batch.action)
     t3 = torch.cat(batch.reward)
-    t4 = torch.cat(batch.next_state)
-
+    t4 = torch.cat(bns)
+    
     return (t1,t2,t3,t4)
 
 def plot(values, moving_avg_period):
@@ -75,9 +84,7 @@ def plot(values, moving_avg_period):
     plt.ylabel('Duration')
     plt.plot(values)
 
-    moving_avg = get_moving_average(moving_avg_period, values)
-    plt.plot(moving_avg)    
+    durations_t = torch.tensor(values, dtype=torch.float)
+    plt.plot(durations_t.numpy())
+    
     plt.pause(0.001)
-    print("Episode", len(values), "\n", \
-        moving_avg_period, "episode moving avg:", moving_avg[-1])
-    if is_ipython: display.clear_output(wait=True)

@@ -89,43 +89,31 @@ for episode in range(num_episodes):
     img = envM.get_state()
     state = decreaseObservationSpace(img)
     state = addDirection(state,None)
-    print("Initial State",state)
+    # print("Initial State",state)
     assert (state.shape[0]==113)
     
     for timestep in count():
         action = agent.select_action(state, policy_net)
-        print("Getting actions",action)
         reward = envM.take_action(action)
-        print("Getting reward", reward)
         next_img = envM.get_state()
         
         next_state = decreaseObservationSpace(img)
         
         next_state = addDirection(next_state,state)
-        print("State",next_state)
         memory.push(Experience(state, action, next_state, reward))
-        print("Pushing into memory")
         state = next_state
         if memory.can_provide_sample(batch_size):
-            print("Enough data in memory")
             experiences = memory.sample(batch_size)
-            print("Loading batch")
             states, actions, rewards, next_states = extract_tensors(experiences)
-            print("Compute Q")
             current_q_values = QValues.get_current(policy_net, states, actions)
-            print("compute next Q")
             next_q_values = QValues.get_next(target_net, next_states)
-            print("Compute target Q")
             target_q_values = (next_q_values * gamma) + rewards
-            print(current_q_values, next_q_values,target_q_values)
-            print("Computing loss")   
             loss = F.mse_loss(current_q_values, target_q_values.unsqueeze(1))
-            print(loss)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
         if envM.done:
-            print("Done!")
+            print("Environment Done!")
             episode_durations.append(timestep)
             plot(episode_durations, 100)
             break
