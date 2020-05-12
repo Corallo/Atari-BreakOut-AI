@@ -103,26 +103,42 @@ for episode in range(num_episodes):
     assert (state.shape[0]==113)
     
     for timestep in count():
-        #s_time = time.time()
+       # s_time = time.time()
         envM.render()
         #e_time = time.time()
-        #print("Time to render")
+        #print("Time to render: ",e_time-s_time)
+        #s_time = time.time()
         action = agent.select_action(state, policy_net)
+        #e_time = time.time()
+        #print("Time to get action: ",e_time-s_time)
+        #s_time = time.time()
         reward = envM.take_action(action)
+        #e_time = time.time()
+        #print("Time to execute action: ",e_time-s_time)
+        
         score+=reward
         #reward=torch.tensor([reward*100 - 0.1], device=device) # This should not b ehere
         #Add higher penalty for each frame the ball is not in the map
         #Maybe add another penalty when you loose the ball (this may be harder)
+        #s_time = time.time()
         next_img = envM.get_state()
+        #e_time = time.time()
+        #print("Time to get state: ",e_time-s_time)
+        
+        #s_time = time.time()
         
         next_state = decreaseObservationSpace(img)
+        #e_time = time.time()
+        #print("Time to compress state: ",e_time-s_time)
+        
+        #s_time = time.time()
         
         next_state = addDirection(next_state,state)
-        if(next_state[112]==0 and next_state[111]==0):
-            reward -=10 #No ball penalty
-            reward=torch.tensor([reward - 0.1], device=device) # This should not b ehere
-        else:
-            reward=torch.tensor([reward*100 - 0.1], device=device) # This should not b ehere
+        #e_time = time.time()
+        #print("Time to add direction: ",e_time-s_time)
+        
+
+        reward=torch.tensor([reward*100 - 0.1], device=device) # This should not b ehere
         memory.push(Experience(state, action, next_state, reward))
         state = next_state
         if memory.can_provide_sample(batch_size):
