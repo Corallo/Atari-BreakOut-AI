@@ -14,11 +14,6 @@ class DQN(nn.Module):
         self.out = nn.Linear(in_features=8, out_features=4)
         
     def forward(self, t):
-        print("Forwarfing ", t)       
-        print("Forwarfing ", t)        
-        print("Forwarfing ", t)        
-        print("Forwarfing ", t)        
-        print("Forwarfing ", t)
         t = F.relu(self.fc1(t))
         t = F.relu(self.fc2(t))
         t = F.relu(self.fc3(t))

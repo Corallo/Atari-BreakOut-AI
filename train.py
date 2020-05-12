@@ -1,10 +1,11 @@
+
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from collections import namedtuple
 from itertools import count
 from PIL import Image
-
+import time
 from replayMemory import *
 from epsilonGreedyStrategy import *
 from agent import *
@@ -20,9 +21,12 @@ import torch.nn.functional as F
 import torchvision.transforms as T   
 
 
+
+
+"""
 is_ipython = 'inline' in matplotlib.get_backend()
 if is_ipython: from IPython import display
-
+"""
 
     
 Experience = namedtuple(
@@ -59,12 +63,16 @@ gamma = 0.999
 #Policy var
 eps_start = 1
 eps_end = 0.01
-eps_decay = 0.001
+eps_decay = 0.0001
 
-target_update = 10
+target_update = 5
 memory_size = 100000
 lr = 0.001
 num_episodes = 1000
+
+
+start_time = time.time()
+# your code
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 envM = EnvManager(device)
@@ -85,49 +93,53 @@ optimizer = optim.Adam(params=policy_net.parameters(), lr=lr)
 
 episode_durations = []
 for episode in range(num_episodes):
+    episode_time=time.time()
     envM.reset()
     img = envM.get_state()
     state = decreaseObservationSpace(img)
     state = addDirection(state,None)
-    print("Initial State",state)
+    score = 0;
+    # print("Initial State",state)
     assert (state.shape[0]==113)
     
     for timestep in count():
+        #s_time = time.time()
+        envM.render()
+        #e_time = time.time()
+        #print("Time to render")
         action = agent.select_action(state, policy_net)
-        print("Getting actions",action)
         reward = envM.take_action(action)
-        print("Getting reward", reward)
+        score+=reward
+        #reward=torch.tensor([reward*100 - 0.1], device=device) # This should not b ehere
+        #Add higher penalty for each frame the ball is not in the map
+        #Maybe add another penalty when you loose the ball (this may be harder)
         next_img = envM.get_state()
         
         next_state = decreaseObservationSpace(img)
         
         next_state = addDirection(next_state,state)
-        print("State",next_state)
+        if(next_state[112]==0 and next_state[111]==0):
+            reward -=10 #No ball penalty
+            reward=torch.tensor([reward - 0.1], device=device) # This should not b ehere
+        else:
+            reward=torch.tensor([reward*100 - 0.1], device=device) # This should not b ehere
         memory.push(Experience(state, action, next_state, reward))
-        print("Pushing into memory")
         state = next_state
         if memory.can_provide_sample(batch_size):
-            print("Enough data in memory")
             experiences = memory.sample(batch_size)
-            print("Loading batch")
-            states, actions, rewards, next_states = extract_tensors(experiences)
-            print("Compute Q")
+            states, actions, rewards, next_states = extract_tensors(experiences,device)
             current_q_values = QValues.get_current(policy_net, states, actions)
-            print("compute next Q")
             next_q_values = QValues.get_next(target_net, next_states)
-            print("Compute target Q")
             target_q_values = (next_q_values * gamma) + rewards
-            print(current_q_values, next_q_values,target_q_values)
-            print("Computing loss")   
             loss = F.mse_loss(current_q_values, target_q_values.unsqueeze(1))
-            print(loss)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
         if envM.done:
-            print("Done!")
-            episode_durations.append(timestep)
-            plot(episode_durations, 100)
+            
+            print("Game Finished! frames: ", timestep," Game time ",int(time.time() - episode_time), " Score: ", score, " Game played: ", episode, " Total Time: ",int(time.time() - start_time) )
+            #episode_durations.append(timestep)
+            #plot(episode_durations, 100)
             break
     if episode % target_update == 0:
         target_net.load_state_dict(policy_net.state_dict())
