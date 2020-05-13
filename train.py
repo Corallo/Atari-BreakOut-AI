@@ -103,7 +103,7 @@ except:
 	print("No state_dict found")
 	
 target_net.load_state_dict(policy_net.state_dict())
-target_net.train()
+target_net.eval()
 
 episode_durations = []
 for episode in range(episode_start, num_episodes):
