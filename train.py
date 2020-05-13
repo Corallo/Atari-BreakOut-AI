@@ -78,21 +78,35 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 envM = EnvManager(device)
 strategy = EpsilonGreedyStrategy(eps_start, eps_end, eps_decay)
 agent = Agent(strategy, envM.num_actions_available(), device)
+
 #1) Initialize replay memory capacity.
 memory = ReplayMemory(memory_size)
 
 #2) Initialize the policy network with random weights.
 policy_net = DQN().to(device)
 target_net = DQN().to(device)
-target_net.load_state_dict(policy_net.state_dict())
-target_net.eval()
+
 optimizer = optim.Adam(params=policy_net.parameters(), lr=lr)
 
+episode_start = 0
 
-
+try:
+	checkpoint = torch.load("saved_state_dict.pt")
+	policy_net.load_state_dict(checkpoint['model_state_dict'])
+	optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+	episode_start = checkpoint['episode'] + 1
+	memory = checkpoint['memory']
+	policy_net.train()
+	
+	print("Found saved state_dict")
+except:	
+	print("No state_dict found")
+	
+target_net.load_state_dict(policy_net.state_dict())
+target_net.train()
 
 episode_durations = []
-for episode in range(num_episodes):
+for episode in range(episode_start, num_episodes):
     episode_time=time.time()
     envM.reset()
     img = envM.get_state()
@@ -159,6 +173,12 @@ for episode in range(num_episodes):
             break
     if episode % target_update == 0:
         target_net.load_state_dict(policy_net.state_dict())
+        torch.save({
+        	'episode': episode,
+        	'model_state_dict': target_net.state_dict(),
+        	'optimizer_state_dict': optimizer.state_dict(),
+        	'memory': memory
+        }, "saved_state_dict.pt")
 envM.close()
 
 
