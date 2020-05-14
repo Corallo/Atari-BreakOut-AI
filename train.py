@@ -74,7 +74,7 @@ num_episodes = 1000
 start_time = time.time()
 # your code
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = "cpu" #torch.device("cuda" if torch.cuda.is_available() else "cpu")
 envM = EnvManager(device)
 strategy = EpsilonGreedyStrategy(eps_start, eps_end, eps_decay)
 agent = Agent(strategy, envM.num_actions_available(), device)
@@ -133,28 +133,21 @@ for episode in range(episode_start, num_episodes):
         #print("Time to execute action: ",e_time-s_time)
         
         score+=reward
-        #reward=torch.tensor([reward*100 - 0.1], device=device) # This should not b ehere
-        #Add higher penalty for each frame the ball is not in the map
-        #Maybe add another penalty when you loose the ball (this may be harder)
-        #s_time = time.time()
-        next_img = envM.get_state()
-        #e_time = time.time()
-        #print("Time to get state: ",e_time-s_time)
-        
-        #s_time = time.time()
-        
-        next_state = decreaseObservationSpace(img)
-        #e_time = time.time()
-        #print("Time to compress state: ",e_time-s_time)
-        
-        #s_time = time.time()
-        
-        next_state = addDirection(next_state,state)
-        #e_time = time.time()
-        #print("Time to add direction: ",e_time-s_time)
         
 
-        reward=torch.tensor([reward*100 - 0.1], device=device) # This should not b ehere
+        next_img = envM.get_state()
+        next_state = decreaseObservationSpace(next_img)
+        next_state = addDirection(next_state,state)
+
+        reward*=100
+        if(next_state[110]==0 and next_state[109]==0):
+             reward=torch.tensor([float(-100.0)], device=device) # This should not b ehere
+             print(reward)
+        else:
+            reward += (float(8.0 - (np.absolute(next_state[110]-(next_state[108]+8))/5)))
+            print(next_state[108]+8,next_state[110],reward)
+            reward=torch.tensor([reward], device=device) # This should not b ehere
+        time.sleep(0.5)  
         memory.push(Experience(state, action, next_state, reward))
         state = next_state
         if memory.can_provide_sample(batch_size):
