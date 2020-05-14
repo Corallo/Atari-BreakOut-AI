@@ -89,13 +89,16 @@ target_net = DQN().to(device)
 optimizer = optim.Adam(params=policy_net.parameters(), lr=lr)
 
 episode_start = 0
+episode_durations = []
+scores = []
 
 try:
 	checkpoint = torch.load("saved_state_dict.pt")
 	policy_net.load_state_dict(checkpoint['model_state_dict'])
 	optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 	episode_start = checkpoint['episode'] + 1
-	memory = checkpoint['memory']
+	episode_durations = checkpoint['episode_durations']
+	scores = checkpoint['scores']
 	policy_net.train()
 	
 	print("Found saved state_dict")
@@ -105,7 +108,6 @@ except:
 target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
 
-episode_durations = []
 for episode in range(episode_start, num_episodes):
     episode_time=time.time()
     envM.reset()
@@ -168,8 +170,9 @@ for episode in range(episode_start, num_episodes):
         if envM.done:
             
             print("Game Finished! frames: ", timestep," Game time ",int(time.time() - episode_time), " Score: ", score, " Game played: ", episode, " Total Time: ",int(time.time() - start_time) )
-            #episode_durations.append(timestep)
-            #plot(episode_durations, 100)
+            episode_durations.append(timestep)
+            scores.append(score)
+            plot(episode_durations, scores)
             break
     if episode % target_update == 0:
         target_net.load_state_dict(policy_net.state_dict())
@@ -177,7 +180,8 @@ for episode in range(episode_start, num_episodes):
         	'episode': episode,
         	'model_state_dict': target_net.state_dict(),
         	'optimizer_state_dict': optimizer.state_dict(),
-        	'memory': memory
+        	'episode_durations': episode_durations,
+        	'scores': scores
         }, "saved_state_dict.pt")
 envM.close()
 

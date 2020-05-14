@@ -105,15 +105,16 @@ def extract_tensors(experiences, device):
     
     return (t1,t2,t3,t4)
 
-def plot(values, moving_avg_period):
-    plt.figure(2)
-    plt.clf()        
-    plt.title('Training...')
-    plt.xlabel('Episode')
-    plt.ylabel('Duration')
-    plt.plot(values)
+fig, (ax1, ax2) = plt.subplots(2, 1)
 
-    durations_t = torch.tensor(values, dtype=torch.float)
-    plt.plot(durations_t.numpy())
+def plot(episode_duration, scores):
+    ax1.clear()
+    ax2.clear()
+    
+    ax1.set(xlabel='Episode', ylabel='Duration')
+    ax2.set(xlabel='Episode', ylabel='Score')
+    
+    ax1.plot(episode_duration)
+    ax2.bar(np.arange(len(scores)), scores)
     
     plt.pause(0.001)
