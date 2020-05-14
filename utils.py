@@ -53,21 +53,31 @@ def decreaseObservationSpace(observationSpace_old):
 def decreaseObservationSpace(observation):
     observation = np.sum(observation, axis=2)
     blocks = observation[57:88:6,8:152:8].flatten() #try to avoid flatten and use ravel for performance
+    
     blocks = np.where(blocks > 0, 1, -1).astype(float) # try ti avoid this for performance
     
-
     sliderLine = observation[190,8:152]
     slider = float(np.nonzero(sliderLine)[0][0] - 72)
 
-    
-    ballSpace = observation[93:189,8:152]
-    ball=np.nonzero(ballSpace)
-    if(ball[0].shape[0]>0):
-        ballx=ball[0][0] - 48 #normalizing
-        bally=ball[1][0] - 72 
+    ball = np.nonzero(np.append(observation[32:56, 8:152], observation[93:189, 8:152], axis=0))
+    if ball[0].size != 0:
+        ballx = ball[0][0] - 48
+        bally = ball[1][0] - 72
     else:
         ballx = 0
         bally = 0
+        
+        x = np.argwhere(blocks.reshape(6, 18) == -1) # get indices
+        for xi in x:
+            h1 = 6 * xi[0] + 57
+            h2 = 6 * xi[0] + 6 + 57
+            v1 = 8 * xi[1] + 8
+            v2 = 8 * xi[1] + 8 + 8
+            ball = np.nonzero(observation[h1:h2, v1:v2])
+            if ball[0].size != 0:
+                ballx = ball[0][0] - 48
+                bally = ball[1][0] - 72
+                break
 
     out = np.zeros(108+1+2)
     out[0:108]=blocks
