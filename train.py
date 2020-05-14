@@ -67,7 +67,7 @@ eps_decay = 0.0001
 target_update = 5
 memory_size = 100000
 lr = 0.001
-num_episodes = 1000
+num_episodes = 100000
 
 start_time = time.time()
 # your code
@@ -75,7 +75,6 @@ start_time = time.time()
 device = "cpu" #torch.device("cuda" if torch.cuda.is_available() else "cpu")
 envM = EnvManager(device)
 strategy = EpsilonGreedyStrategy(eps_start, eps_end, eps_decay)
-agent = Agent(strategy, envM.num_actions_available(), device)
 
 #1) Initialize replay memory capacity.
 memory = ReplayMemory(memory_size)
@@ -97,11 +96,16 @@ try:
 	episode_start = checkpoint['episode'] + 1
 	episode_durations = checkpoint['episode_durations']
 	scores = checkpoint['scores']
+	current_step = checkpoint['current_step']
+	agent = Agent(strategy, envM.num_actions_available(), device, current_step)
 	policy_net.train()
+	
+	print(current_step)
 	
 	print("Found saved state_dict")
 except:	
-	print("No state_dict found")
+    agent = Agent(strategy, envM.num_actions_available(), device, 0)
+    print("No state_dict found")
 	
 target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
@@ -172,7 +176,8 @@ for episode in range(episode_start, num_episodes):
         	'model_state_dict': target_net.state_dict(),
         	'optimizer_state_dict': optimizer.state_dict(),
         	'episode_durations': episode_durations,
-        	'scores': scores
+        	'scores': scores,
+        	'current_step': agent.current_step
         }, "saved_state_dict.pt")
     if episode == 100 or episode == 200 or episode == 500 or episode == 1000 or episode == 5000 or episode == 10000:
         torch.save({

@@ -2,8 +2,8 @@ import torch
 import random
 
 class Agent():
-    def __init__(self, strategy, num_actions, device):
-        self.current_step = 0
+    def __init__(self, strategy, num_actions, device, current_step):
+        self.current_step = current_step
         self.strategy = strategy
         self.num_actions = num_actions
         self.device = device
@@ -18,3 +18,5 @@ class Agent():
         else:
             with torch.no_grad():
                 return torch.tensor([policy_net(torch.from_numpy(state).float().to(self.device)).argmax()]).to(self.device)
+                
+
