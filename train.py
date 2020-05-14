@@ -69,7 +69,6 @@ memory_size = 100000
 lr = 0.001
 num_episodes = 1000
 
-
 start_time = time.time()
 # your code
 
@@ -175,6 +174,15 @@ for episode in range(episode_start, num_episodes):
         	'episode_durations': episode_durations,
         	'scores': scores
         }, "saved_state_dict.pt")
+    if episode == 100 or episode == 200 or episode == 500 or episode == 1000 or episode == 5000 or episode == 10000:
+        torch.save({
+        	'episode': episode,
+        	'model_state_dict': target_net.state_dict(),
+        	'optimizer_state_dict': optimizer.state_dict(),
+        	'episode_durations': episode_durations,
+        	'scores': scores
+        }, "saved_state_dict_" + str(episode) + ".pt")
+    	
 envM.close()
 
 
