@@ -1,7 +1,7 @@
 import torch
 
 class QValues():
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = "cpu"#torch.device("cuda" if torch.cuda.is_available() else "cpu")
     @staticmethod 
     def get_current(policy_net, states, actions):
         return policy_net(states.resize_((256, 113)).float()).gather(dim=1, index=actions.unsqueeze(-1))

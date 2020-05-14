@@ -57,7 +57,12 @@ def decreaseObservationSpace(observation):
     blocks = np.where(blocks > 0, 1, -1).astype(float) # try ti avoid this for performance
     
     sliderLine = observation[190,8:152]
-    slider = float(np.nonzero(sliderLine)[0][0] - 72)
+    nonzero = np.nonzero(sliderLine)
+    #if(nonzero[0].shape[0]==16):
+    #    slider = float(nonzero[0][0] - 72)
+    #else:
+    #    print("Ball in the way")
+    slider = float(np.median(nonzero[0]) - 72)
 
     ball = np.nonzero(np.append(observation[32:56, 8:152], observation[93:189, 8:152], axis=0))
     if ball[0].size != 0:

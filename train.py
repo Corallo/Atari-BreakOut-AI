@@ -1,4 +1,3 @@
-
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -139,15 +138,15 @@ for episode in range(episode_start, num_episodes):
         next_state = decreaseObservationSpace(next_img)
         next_state = addDirection(next_state,state)
 
-        reward*=100
+        reward*=1000
         if(next_state[110]==0 and next_state[109]==0):
              reward=torch.tensor([float(-100.0)], device=device) # This should not b ehere
-             print(reward)
+             #print(reward)
         else:
-            reward += (float(8.0 - (np.absolute(next_state[110]-(next_state[108]+8))/5)))
-            print(next_state[108]+8,next_state[110],reward)
+            reward += float(np.clip((float(8.0 - (np.absolute(next_state[110]-(next_state[108]))))),-10.0,8.0))
+            #print(next_state[108]+8,next_state[110],reward)
             reward=torch.tensor([reward], device=device) # This should not b ehere
-        time.sleep(0.5)  
+        #time.sleep(0.5)  
         memory.push(Experience(state, action, next_state, reward))
         state = next_state
         if memory.can_provide_sample(batch_size):
