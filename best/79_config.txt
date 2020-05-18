@@ -1,0 +1,16 @@
+DQN:
+in - 256 - 128 - 8 - out
+
+train:
+
+batch_size = 128
+gamma = 0.999
+#Policy var
+eps_start = 1
+eps_end = 0.01
+eps_decay = 0.0001
+
+target_update = 5
+memory_size = 100000
+lr = 0.001
+num_episodes = 100000

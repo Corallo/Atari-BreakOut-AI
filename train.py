@@ -57,7 +57,7 @@ time steps, weights in the target network are updated to the weights in the poli
 """
     
         
-batch_size = 256
+batch_size = 128
 gamma = 0.999
 #Policy var
 eps_start = 1
@@ -122,7 +122,7 @@ for episode in range(episode_start, num_episodes):
     
     for timestep in count():
        # s_time = time.time()
-        envM.render()
+        #envM.render()
         #e_time = time.time()
         #print("Time to render: ",e_time-s_time)
         #s_time = time.time()
@@ -141,7 +141,7 @@ for episode in range(episode_start, num_episodes):
         next_state = decreaseObservationSpace(next_img)
         next_state = addDirection(next_state,state)
 
-        reward*=1000
+        # reward*=1000
         if(next_state[110]==0 and next_state[109]==0):
              reward=torch.tensor([float(-100.0)], device=device) # This should not b ehere
              #print(reward)
