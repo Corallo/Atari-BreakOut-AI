@@ -57,7 +57,7 @@ time steps, weights in the target network are updated to the weights in the poli
 """
     
         
-batch_size = 128
+batch_size = 32
 gamma = 0.999
 #Policy var
 eps_start = 1
@@ -66,11 +66,13 @@ eps_decay = 0.0001
 
 target_update = 5
 memory_size = 100000
-lr = 0.001
+lr = 0.0005
 num_episodes = 100000
 
 start_time = time.time()
 # your code
+
+
 
 device = "cpu" #torch.device("cuda" if torch.cuda.is_available() else "cpu")
 envM = EnvManager(device)
@@ -88,6 +90,10 @@ optimizer = optim.Adam(params=policy_net.parameters(), lr=lr)
 episode_start = 0
 episode_durations = []
 scores = []
+
+bestScore = 0
+bestModel = target_net
+bestGamePlayed = 0
 
 try:
 	checkpoint = torch.load("saved_state_dict.pt")
@@ -122,7 +128,7 @@ for episode in range(episode_start, num_episodes):
     
     for timestep in count():
        # s_time = time.time()
-        #envM.render()
+        envM.render()
         #e_time = time.time()
         #print("Time to render: ",e_time-s_time)
         #s_time = time.time()
@@ -141,15 +147,15 @@ for episode in range(episode_start, num_episodes):
         next_state = decreaseObservationSpace(next_img)
         next_state = addDirection(next_state,state)
 
-        # reward*=1000
+        reward*=10
         if(next_state[110]==0 and next_state[109]==0):
              reward=torch.tensor([float(-100.0)], device=device) # This should not b ehere
              #print(reward)
         else:
-            reward += float(np.clip((float(8.0 - (np.absolute(next_state[110]-(next_state[108]))))),-10.0,8.0))
+            reward += float(8.0 - (np.absolute(next_state[110]-(next_state[108]))))
             #print(next_state[108]+8,next_state[110],reward)
             reward=torch.tensor([reward], device=device) # This should not b ehere
-        #time.sleep(0.5)  
+        #time.sleep(0.5)
         memory.push(Experience(state, action, next_state, reward))
         state = next_state
         if memory.can_provide_sample(batch_size):
@@ -162,9 +168,23 @@ for episode in range(episode_start, num_episodes):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        if envM.done:
             
-            print("Game Finished! frames: ", timestep," Game time ",int(time.time() - episode_time), " Score: ", score, " Game played: ", episode, " Total Time: ",int(time.time() - start_time) )
+        if envM.done:
+            if(score>bestScore):
+                bestScore= score
+                bestModel = target_net
+                bestGamePlayed = episode
+                target_net.load_state_dict(policy_net.state_dict())
+                torch.save({
+                    'episode': episode,
+                	'model_state_dict': target_net.state_dict(),
+                	'optimizer_state_dict': optimizer.state_dict(),
+                	'episode_durations': episode_durations,
+                	'scores': scores,
+                	'current_step': agent.current_step
+                }, "saved_state_dict_best.pt")
+                
+            print("Done! frames: ", timestep," Game time ",int(time.time() - episode_time), " Score: ", score, " Game played: ", episode, " Total Time: ",int(time.time() - start_time), "BestScore: ", bestScore, "after", bestGamePlayed, "games" )
             episode_durations.append(timestep)
             scores.append(score)
             plot(episode_durations, scores)
@@ -179,7 +199,7 @@ for episode in range(episode_start, num_episodes):
         	'scores': scores,
         	'current_step': agent.current_step
         }, "saved_state_dict.pt")
-    if episode == 100 or episode == 200 or episode == 500 or episode == 1000 or episode == 5000 or episode == 10000:
+    if episode == 100 or episode == 200 or (episode%500) == 0 :
         torch.save({
         	'episode': episode,
         	'model_state_dict': target_net.state_dict(),
