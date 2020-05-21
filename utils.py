@@ -98,7 +98,7 @@ def addDirection(NewState,OldState=None):
     if OldState is None:
         dir = np.zeros(2,dtype=float)
     else:
-        dir = NewState[-2:]-OldState[-2:]
+        dir = NewState[-2:]-OldState[-4:-2]
     l2 = list(dir)
     l1=l1+l2
     return np.array(l1)

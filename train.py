@@ -64,7 +64,7 @@ eps_start = 1
 eps_end = 0.01
 eps_decay = 0.0001
 
-target_update = 5
+target_update = 4
 memory_size = 100000
 lr = 0.0005
 num_episodes = 100000
@@ -147,6 +147,7 @@ for episode in range(episode_start, num_episodes):
         next_state = decreaseObservationSpace(next_img)
         next_state = addDirection(next_state,state)
 
+       
         reward*=10
         if(next_state[110]==0 and next_state[109]==0):
              reward=torch.tensor([float(-100.0)], device=device) # This should not b ehere
