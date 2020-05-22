@@ -23,6 +23,14 @@ policy_net = DQN()
 
 try:
 	checkpoint = torch.load("saved_state_dict.pt")
+	
+	print("Network:\n")
+	for param_tensor in checkpoint['model_state_dict']:
+		print(param_tensor, "\t",checkpoint['model_state_dict'][param_tensor].size())
+	print("")
+	
+	print(policy_net)
+	
 	policy_net.load_state_dict(checkpoint['model_state_dict'])
 	episode_start = checkpoint['episode'] + 1
 	episode_durations = checkpoint['episode_durations']
@@ -34,10 +42,7 @@ except:
     print("No state_dict found")
     exit(1)
     
-    
-print("\nNetwork:")
-for param_tensor in policy_net.state_dict():
-    print(param_tensor, "\t", policy_net.state_dict()[param_tensor].size())
+
     
 print("\nNetwork trained for " + str(sum(episode_durations)) + " frames\n")
 
@@ -60,6 +65,7 @@ while True:
         with torch.no_grad():
             action = torch.tensor([policy_net(torch.from_numpy(state).float()).argmax()])
         reward = envM.take_action(action)
+        print(action)
         
         score+=reward
         
